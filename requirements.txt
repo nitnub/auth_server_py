@@ -1,7 +1,10 @@
 python-dotenv
 flask
 flask-smorest
+flask-jwt-extended
 sqlalchemy
 flask-sqlalchemy
+flask-migrate
+passlib
 psycopg
-psycopg-binary 
+psycopg-binary

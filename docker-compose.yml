@@ -14,8 +14,8 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_PASSWORD=password      # TODO: note temp for local
-      - POSTGRES_DB=myapp               # TODO: note temp for local
+      - POSTGRES_PASSWORD=password      # TODO: note temp for local dev
+      - POSTGRES_DB=myapp               # TODO: note temp for local dev
     volumes:
       - postgres_data:/var/lib/postgresql
 volumes:

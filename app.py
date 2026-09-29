@@ -1,8 +1,10 @@
 import os
 
+from dotenv import load_dotenv
 from flask import Flask
 from flask_smorest import Api
-from dotenv import load_dotenv
+from flask_migrate import Migrate
+from flask_jwt_extended import JWTManager
 
 from db import db
 from models.user import UserModel
@@ -22,9 +24,26 @@ def create_app():
 
     # register db
     db.init_app(app)
-
+    migrate = Migrate(app, db)
 
     api = Api(app)
+
+
+    # JWTs
+    # TODO: isolate config?
+    app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+    jwt = JWTManager(app)
+
+
+
+
+
+
+    # # create tables if not present... remove.. switch to migrate
+    # with app.app_context():
+    #     db.create_all()
+
+
     api.register_blueprint(UserBluePrint)
 
     return app
