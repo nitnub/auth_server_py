@@ -7,6 +7,7 @@ from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 
 from db import db
+from cache import cache
 from models.user import UserModel
 from resources.user import bp as UserBluePrint
 
@@ -34,9 +35,14 @@ def create_app():
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
     jwt = JWTManager(app)
 
-
-
-
+    # JWT Blocklist
+    @jwt.token_in_blocklist_loader
+    def token_in_blocklist(jwt_header, jwt_payload):
+        jti = jwt_payload.get("jti")
+        if not jti:
+            print("Error checking blacklist: jti not provided.")
+            return True
+        return cache.is_blacklisted(jti)
 
 
     # # create tables if not present... remove.. switch to migrate
@@ -47,34 +53,4 @@ def create_app():
     api.register_blueprint(UserBluePrint)
 
     return app
-    # @app.post('/register')
-    # def register_user():
-    #     # 
-    #     pass
-
-    # @app.post('/signin')
-    # def sign_in():
-    #     pass
-
-    # @app.post('/signin-oauth')
-    # def sign_in_oauth():
-    #     pass
-
-    # @app.post('/signout')
-    # def sign_out():
-    #     pass
-
-    # @app.get('/token')
-    # def refresh_token():
-    #     pass
-
-
-    # # email testing
-    # @app.get('/2fa-email')
-    # def request_2fa_email():
-    #     pass
-
-    # @app.post('/2fa-email')
-    # def confirm_2fa_email():
-    #     pass
 
