@@ -17,7 +17,6 @@ def create_app():
     load_dotenv()
 
 
-
     app.config["API_TITLE"] = "User authentication API"
     app.config["API_VERSION"] = "v1"
     app.config["OPENAPI_VERSION"] = "3.2.0"
@@ -45,7 +44,7 @@ def create_app():
         return cache.is_blacklisted(jti)
 
 
-    # # create tables if not present... remove.. switch to migrate
+    # # create tables if not present... remove.. switched to migrate
     # with app.app_context():
     #     db.create_all()
 

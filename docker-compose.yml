@@ -12,7 +12,7 @@ services:
   db:
     image: postgres
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       - POSTGRES_PASSWORD=password      # TODO: note temp for local dev
       - POSTGRES_DB=myapp               # TODO: note temp for local dev
@@ -21,10 +21,7 @@ services:
   redis:
     image: redis
     ports:
-      - "6379:6379"
-    environment:
-      - ALLOW_EMPTY_PASSWORD=no
-      - REDIS_PASSWORD=password         # TODO: note temp for local dev
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
 volumes:

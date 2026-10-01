@@ -6,7 +6,7 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt, get_jti, get_jwt_identity, jwt_required
 from sqlalchemy.exc import IntegrityError
 
-from passlib.hash import pbkdf2_sha256
+from passlib.hash import pbkdf2_sha256 as h
 from db import db
 from cache import cache
 
@@ -25,7 +25,7 @@ class RegisterUser(MethodView):
         try:
             user_hashed = {
                 **user_data, 
-                "password": pbkdf2_sha256.hash(user_data["password"])
+                "password": h.hash(user_data["password"])
                 }
 
             user = UserModel(**user_hashed)
@@ -39,8 +39,6 @@ class RegisterUser(MethodView):
             abort(409, "Username already in use.")
 
 
-
-
 @bp.route("/signin")
 class SignIn(MethodView): 
     @bp.arguments(SignInSchema)
@@ -48,10 +46,17 @@ class SignIn(MethodView):
         try:        
             user = UserModel.query.filter(UserModel.email == user_data["email"]).first()
 
-            if user and pbkdf2_sha256.verify(user_data["password"], user.password):
-                access_token = create_access_token(identity=str(user.id), fresh=True)
-                refresh_token = create_refresh_token(identity=str(user.id))
-                return {"access_token": access_token, "refresh_token": refresh_token}
+            if user and h.verify(user_data["password"], user.password):
+                uid = str(user.id)
+                access_token = create_access_token(identity=uid, fresh=True)
+                refresh_token = create_refresh_token(identity=uid)
+
+                # access_token = create_access_token(identity=str(user.id), fresh=True)
+                # refresh_token = create_refresh_token(identity=str(user.id))
+                return {
+                    "access_token": access_token, 
+                    "refresh_token": refresh_token
+                }
 
             abort(401, message="Invalid credentials.")
         except Exception as e:
@@ -65,12 +70,8 @@ class SignOut(MethodView):
     def post(self):
         # blacklist jti
         jwt = get_jwt()
-        # jti = jwt.get("jti")
-        # exp = jwt.get("exp")
-        # cache.blacklist(jti, exp)
         cache.blacklist(jwt.get("jti"), jwt.get("exp"))
         return {"success": True, "message": "Signed out successfully."}
-
 
 
 @bp.route("/token")
@@ -83,13 +84,6 @@ class TokenRefresh(MethodView):
         token = create_access_token(identity=get_jwt_identity(), fresh=False)
         return {"access_token": token}
 
-        # return {
-        #     "access_token": 
-        #         create_access_token(
-        #             identity=get_jwt_identity(), 
-        #             fresh=False
-        #         )
-        #     }
 
 
 
@@ -99,9 +93,6 @@ class TokenRefresh(MethodView):
 
 
 
-    # @app.post('/signout')
-    # def sign_out():
-    #     pass
 
     # @app.post('/signin-oauth')
     # def sign_in_oauth():
@@ -109,9 +100,6 @@ class TokenRefresh(MethodView):
 
 
 
-    # @app.get('/token')
-    # def refresh_token():
-    #     pass
 
 
     # # email testing
