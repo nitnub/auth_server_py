@@ -13,6 +13,7 @@ from cache import cache
 from models import UserModel, TokenModel
 from schemas import UserSchema, SignInSchema
 
+from mfa import send_mfa_email
 
 bp = Blueprint("Users", __name__, description="User operations")
 
@@ -122,7 +123,9 @@ class TestRequest(MethodView):
         # # current_utc = datetime.now(timezone.utc).total_seconds()
         # current_utc = int(time.time())
 
+        tst = send_mfa_email("email address", 987654321)
 
+        return {"success": True, "temp_identifier": 987654321}
 
         # # date = datetime.utcfromtimestamp(current_utc / 1e3)
         # # date = datetime.utcfromtimestamp(current_utc)

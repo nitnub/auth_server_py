@@ -34,6 +34,17 @@ class TokenCache():
 
         return self.r.get(jti) is not None
 
+    # save data for 2fa
+    def save_confirmation(self, request_id, confirmation_code):
+        if not request_id or confirmation_code:
+            return False
+        ttl = 60 * 5  # 5 mins... 
+        self.r.setex(request_id, ttl, confirmation_code)
+        return True
+
+    def is_valid_confirmation(self, request_id, confirmation_code):
+        prior_code = self.r.get(request_id)
+        return prior_code and prior_code == confirmation_code
 
 
 cache = TokenCache()
