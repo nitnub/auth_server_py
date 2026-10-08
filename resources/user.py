@@ -117,6 +117,9 @@ class TestRequest(MethodView):
     @jwt_required()
     def post(self):
 
+
+    
+
         # current_utc = int(datetime.now(timezone.utc).timestamp())
         # current_utc_now = int(datetime.utcnow().timestamp())
         # # current_utc = datetime.now(timezone.utc).total_seconds()
@@ -161,7 +164,7 @@ class TestRequest(MethodView):
         return {
             "jti_________": get_jwt().get("jti"),
             "iat__as__int": get_jwt().get("iat"),
-            "current_time": cur_time, 
+            "current_time": cur_time,
             "iat_____time": iat_time,
             "exp_____time": exp_time,
             "is___expired": cur_time > exp_time
@@ -181,3 +184,16 @@ class TestRequest(MethodView):
 
         db.session.add(token)
         db.session.commit()
+
+
+
+
+@bp.route("/test2")
+class TestRequest2(MethodView):
+    # @jwt_required() # no auth req'd
+    def post(self):
+
+        print("moo")
+        return {
+            "val": "moo"
+            }, 200
