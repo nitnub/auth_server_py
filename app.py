@@ -8,26 +8,23 @@ from flask_jwt_extended import JWTManager
 
 from db import db
 from cache import cache
-from models.user import UserModel
 from resources.user import bp as UserBluePrint
 
 
-def create_app():
+def create_app(db_url=None):
     app = Flask(__name__)
     load_dotenv()
-
 
     app.config["API_TITLE"] = "User authentication API"
     app.config["API_VERSION"] = "v1"
     app.config["OPENAPI_VERSION"] = "3.2.0"
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///data.db")
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv("DATABASE_URL", "sqlite:///data.db")
 
     # register db
     db.init_app(app)
     migrate = Migrate(app, db)
 
     api = Api(app)
-
 
     # JWTs
     # TODO: isolate config?
@@ -43,13 +40,10 @@ def create_app():
             return True
         return cache.is_blacklisted(jti)
 
-
     # # create tables if not present... remove.. switched to migrate
     # with app.app_context():
     #     db.create_all()
 
-
     api.register_blueprint(UserBluePrint)
 
     return app
-

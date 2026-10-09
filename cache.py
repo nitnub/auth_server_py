@@ -2,13 +2,15 @@ import os
 import redis
 from datetime import datetime, timezone
 
- 
+REDIS_DEFAULT_PORT = 6379
+
+
 class TokenCache():
     def __init__(self):
         self.r = redis.Redis(
-            host = os.getenv("REDIS_HOST"),
-            port = os.getenv("REDIS_PORT"),
-            db = os.getenv("REDIS_DB")            
+            host=os.getenv("REDIS_HOST"),
+            port=os.getenv("REDIS_PORT", REDIS_DEFAULT_PORT),
+            db=os.getenv("REDIS_DB")
         )
 
     # blacklist a token
@@ -26,13 +28,23 @@ class TokenCache():
             print("Error adding jti to blacklist", e)
             return False
 
-    # check if token is blacklisted 
+    # # check if token is blacklisted
+    # def is_blacklisted(self, jti):
+
+    #     if not jti:
+    #         print("Error checking blocklist for jti, malformed request.")
+    #         return True
+
+    #     return self.r.get(jti) is not None
+
+    # check if token is blacklisted
     def is_blacklisted(self, jti):
-        if not jti:
-            print("Error checking blocklist for jti, malformed request.")
+        try:
+            return self.r.get(jti) is not None
+        except Exception as e:
+            print("Cache error:", e)  # TODO: Add to logger.. default to block
             return True
 
-        return self.r.get(jti) is not None
 
     # save data for 2fa
     def save_confirmation(self, request_id, confirmation_code):
