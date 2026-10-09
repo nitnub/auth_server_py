@@ -112,6 +112,7 @@ class TokenRefresh(MethodView):
     #     pass
 
 
+
 @bp.route("/test")
 class TestRequest(MethodView):
     @jwt_required()
