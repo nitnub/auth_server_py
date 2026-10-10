@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 REDIS_DEFAULT_PORT = 6379
 
 
-class TokenCache():
+class TokenCache():  # TODO: update name? more general?
     def __init__(self):
         self.r = redis.Redis(
             host=os.getenv("REDIS_HOST"),
@@ -28,15 +28,6 @@ class TokenCache():
             print("Error adding jti to blacklist", e)
             return False
 
-    # # check if token is blacklisted
-    # def is_blacklisted(self, jti):
-
-    #     if not jti:
-    #         print("Error checking blocklist for jti, malformed request.")
-    #         return True
-
-    #     return self.r.get(jti) is not None
-
     # check if token is blacklisted
     def is_blacklisted(self, jti):
         try:
@@ -45,13 +36,12 @@ class TokenCache():
             print("Cache error:", e)  # TODO: Add to logger.. default to block
             return True
 
-
     # save data for 2fa
     def save_confirmation(self, request_id, confirmation_code):
-        if not request_id or confirmation_code:
+        if not request_id or not confirmation_code:
             return False
-        ttl = 60 * 5  # 5 mins... 
-        self.r.setex(request_id, ttl, confirmation_code)
+        ttl = 60 * 5  # 5 mins...
+        self.r.set(request_id, ttl, confirmation_code)
         return True
 
     def is_valid_confirmation(self, request_id, confirmation_code):
