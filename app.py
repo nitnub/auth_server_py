@@ -8,7 +8,8 @@ from flask_jwt_extended import JWTManager
 
 from db import db
 from cache import cache
-from resources.user import bp as UserBluePrint
+# from resources.user import bp as UserBluePrint
+from resources import UserBluePrint, MFABluePrint
 
 
 def create_app(db_url=None):
@@ -45,5 +46,6 @@ def create_app(db_url=None):
     #     db.create_all()
 
     api.register_blueprint(UserBluePrint)
+    api.register_blueprint(MFABluePrint)
 
     return app
