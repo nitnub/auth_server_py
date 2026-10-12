@@ -18,23 +18,29 @@ def _get_email_string(user_email, text):
 def send_mfa_email(user_email, confirmation_code):
 
     sender_email = os.getenv("MFA_EMAIL_ADDRESS")
-    confirmation_code = 8256
+    # confirmation_code = 8256
 
     sender_password = os.getenv("MFA_EMAIL_PASSWORD")
-    user_email = os.getenv("MFA_EMAIL_TEST_RECIPIENT")  # TODO: add for testing
+    # user_email = os.getenv("MFA_EMAIL_TEST_RECIPIENT")  # TODO: add for testing
     smtp = os.getenv("MFA_EMAIL_SMTP")
 
     text = f"Your 2fa code is {confirmation_code}"
 
     try:
         message = _get_email_string(user_email, text)
+        smtp_server = SMTP_SSL(smtp)
 
         ###################################################################
         # TODO: KEEP RETURN STATEMENT DURING DEV TO AVOID ACCIDENTAL SEND #
         ###################################################################
-        return True
+        demo = True
         # smtp_server = SMTP_SSL(smtp, 465)
-        smtp_server = SMTP_SSL(smtp)
+        if demo:
+            print("Demo mode...")
+            print("Recipient:", user_email)
+            print("Text     :", text)
+            return True
+
         smtp_server.login(sender_email, sender_password)
         smtp_server.sendmail(sender_email, user_email, message)
     except Exception as e:

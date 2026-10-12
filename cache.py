@@ -37,16 +37,22 @@ class TokenCache():  # TODO: update name? more general?
             return True
 
     # save data for 2fa
-    def save_confirmation(self, request_id, confirmation_code):
+    def save_confirmation(self, request_id: str, confirmation_code: str):
         if not request_id or not confirmation_code:
             return False
         ttl = 60 * 5  # 5 mins...
-        self.r.set(request_id, ttl, confirmation_code)
+        self.r.set(request_id, confirmation_code, ex=ttl)
         return True
 
     def is_valid_confirmation(self, request_id, confirmation_code):
+        """Verify the given request id -> confirmation code pair is valid."""
         prior_code = self.r.get(request_id)
-        return prior_code and prior_code == confirmation_code
+
+        return prior_code and prior_code.decode() == confirmation_code
+
+    def remove_confirmation(self, request_id):
+        """Remove the given request id from the cache to avoid reuse."""
+        return self.r.delete(request_id) != 0
 
 
 cache = TokenCache()
