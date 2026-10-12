@@ -59,21 +59,19 @@ class EmailRequest(MethodView):
             else:
                 # TODO:  keep logs of this? add to a logger
                 print("Invalid user request for", user_data["email"])
-        except Exception as e:
-            print("error sending email request:", e)
-            # if an internal error, ok to surface to user...
-            # TODO: change to abort()
-            return {
-                "success": False,
-                "message": "Internal error while processing request."
-            }, 500
-        finally:
-            # send success if real or fake email was received
             return {
                 "success": True,
                 "message": "Request processed.",
                 "request_id": request_id
             }
+        except Exception as e:
+            print("error sending email request:", e)
+            # TODO: change to abort(); if an internal error, ok to surface...
+            return {
+                "success": False,
+                "message": "Internal error while processing request."
+            }, 500
+
 
 @bp.route("/mfa/emailconfirm")
 class EmailConfirm(MethodView):
@@ -83,7 +81,7 @@ class EmailConfirm(MethodView):
         # verify email / user
         user = _get_user_by_email(user_data["email"])
         if not user:
-            # TODO: add aborts...
+            # TODO: switch to aborts...
             print("Not a valid user..")
             return {
                 "success": False,
@@ -94,6 +92,7 @@ class EmailConfirm(MethodView):
         if cache.is_valid_confirmation(user_data["temp_id"], user_data["code"]):
             # prevent multiple requests from one temp_id
             cache.remove_confirmation(user_data["temp_id"])
+
             tokens = create_fresh_tokens_obj(user.id)
             return {"success": True, **tokens}, 200
         print("Not a valid confirmation..")
