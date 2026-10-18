@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt, get_jti, get_jwt_identity, jwt_required
@@ -32,7 +33,10 @@ class RegisterUser(MethodView):
 
             db.session.add(user)
             db.session.commit()
-            return {"message": "User created successfully."}, 201
+            return {
+                "success": True,
+                "message": "User created successfully."
+            }, 201
         except TypeError:
             abort(400, "Invalid argument(s).")
         except IntegrityError:
@@ -52,10 +56,11 @@ class SignIn(MethodView):
                 refresh_token = create_refresh_token(identity=uid)
 
                 return {
+                    "success": True,
                     "access_token": access_token,
                     "refresh_token": refresh_token
                 }
-
+            
             abort(401, message="Invalid credentials.")
         except Exception as e:
             print(e)
@@ -76,22 +81,31 @@ class SignOut(MethodView):
 class TokenRefresh(MethodView):
     @jwt_required(refresh=True)
     def post(self):
-        token = create_access_token(identity=get_jwt_identity(), fresh=False)
-        return {"access_token": token}
+        try:
+            token = create_access_token(identity=get_jwt_identity(), fresh=False)
+            return {"success": True, "access_token": token}
+        except Exception as e:
+            print("Error creating access token")
+            abort(500, "Unknown error.")
 
-    # TODO: o-auth...
-    # @app.post('/signin-oauth')
-    # def sign_in_oauth():
-    #     pass
+# TODO: o-auth...
+# @app.post('/signin-oauth')
+# def sign_in_oauth():
+#     pass
 
-    # @app.post('/signout-oauth')
-    # def sign_out_oauth():
-    #     pass
+# @app.post('/signout-oauth')
+# def sign_out_oauth():
+#     pass
 
 @bp.route("/test")
 class TestRequest(MethodView):
-    @jwt_required()
+    # @jwt_required()
     def post(self):
 
+        tree = request
+        leaf = 4
+        # abort(400, "Invalid argument(s).", headers={"success": False})
+        # abort(400, "Invalid argument(s).", success=False)
+        abort(TypeError, message="Invalid argument(s). TypeError")
         tst = send_mfa_email("email address", 987654321)
         return {"success": True, "temp_identifier": 987654321}

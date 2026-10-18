@@ -20,7 +20,7 @@ class TokenCache():  # TODO: update name? more general?
             cur_time = int(datetime.now(timezone.utc).timestamp())
 
             # calculate and set ttl
-            ttl = exp_time - cur_time
+            ttl = exp_time - cur_time + 1  # add 1 sec to force overlap
             self.r.setex(jti, ttl, 1)
 
             return True
