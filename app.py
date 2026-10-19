@@ -1,15 +1,16 @@
 import os
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_smorest import Api
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 
 from db import db
 from cache import cache
-# from resources.user import bp as UserBluePrint
+
 from resources import UserBluePrint, MFABluePrint
+from utils import Log
 
 
 def create_app(db_url=None):
@@ -41,7 +42,6 @@ def create_app(db_url=None):
             return True
         return cache.is_blacklisted(jti)
 
-    
     @jwt.expired_token_loader
     def expired_token_callback(jwt_header, jwt_payload):
         return jsonify({
@@ -50,11 +50,10 @@ def create_app(db_url=None):
             "success": False
         }), 401
 
-
     @jwt.invalid_token_loader
     def invalid_token_callback(error):
         return jsonify({
-            "message": "Unable to verify token signature.", 
+            "message": "Unable to verify token signature.",
             "error": "token_invalid",
             "success": False
         }), 401
@@ -62,6 +61,15 @@ def create_app(db_url=None):
     # # create tables if not present... remove.. switched to migrate
     # with app.app_context():
     #     db.create_all()
+
+    @app.before_request
+    def start_request():
+        Log.incoming(request)
+
+    @app.after_request
+    def end_request(response):
+        Log.result(request, response)
+        return response
 
     api.register_blueprint(UserBluePrint)
     api.register_blueprint(MFABluePrint)
