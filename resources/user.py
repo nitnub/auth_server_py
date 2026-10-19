@@ -1,17 +1,20 @@
-from datetime import datetime, timezone
+from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
-from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt, get_jti, get_jwt_identity, jwt_required
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    get_jwt,
+    get_jwt_identity,
+    jwt_required
+)
 from sqlalchemy.exc import IntegrityError
-
 from passlib.hash import pbkdf2_sha256 as h
 from db import db
+from utils import Log
 from cache import cache
-
 from models import UserModel
 from schemas import UserSchema, SignInSchema
-
-from mfa import send_mfa_email
 
 bp = Blueprint("Users", __name__, description="User operations")
 
@@ -20,19 +23,18 @@ bp = Blueprint("Users", __name__, description="User operations")
 class RegisterUser(MethodView):
     @bp.arguments(UserSchema)
     def post(self, user_data):
-
-        print(user_data)
         try:
             user_hashed = {
                 **user_data,
                 "password": h.hash(user_data["password"])
                 }
-
             user = UserModel(**user_hashed)
-
             db.session.add(user)
             db.session.commit()
-            return {"message": "User created successfully."}, 201
+            return {
+                "success": True,
+                "message": "User created successfully."
+            }, 201
         except TypeError:
             abort(400, "Invalid argument(s).")
         except IntegrityError:
@@ -44,7 +46,9 @@ class SignIn(MethodView):
     @bp.arguments(SignInSchema)
     def post(self, user_data):
         try:
-            user = UserModel.query.filter(UserModel.email == user_data["email"]).first()
+            user = UserModel.query.filter(
+                UserModel.email == user_data["email"]
+            ).first()
 
             if user and h.verify(user_data["password"], user.password):
                 uid = str(user.id)
@@ -52,6 +56,7 @@ class SignIn(MethodView):
                 refresh_token = create_refresh_token(identity=uid)
 
                 return {
+                    "success": True,
                     "access_token": access_token,
                     "refresh_token": refresh_token
                 }
@@ -76,22 +81,28 @@ class SignOut(MethodView):
 class TokenRefresh(MethodView):
     @jwt_required(refresh=True)
     def post(self):
-        token = create_access_token(identity=get_jwt_identity(), fresh=False)
-        return {"access_token": token}
+        try:
+            token = create_access_token(
+                identity=get_jwt_identity(), fresh=False
+            )
+            return {"success": True, "access_token": token}
+        except Exception as e:
+            Log.error("Error creating access token", e)
+            abort(500, "Unknown error.")
 
-    # TODO: o-auth...
-    # @app.post('/signin-oauth')
-    # def sign_in_oauth():
-    #     pass
+# TODO: o-auth...
+# @app.post('/signin-oauth')
+# def sign_in_oauth():
+#     pass
 
-    # @app.post('/signout-oauth')
-    # def sign_out_oauth():
-    #     pass
+# @app.post('/signout-oauth')
+# def sign_out_oauth():
+#     pass
+
 
 @bp.route("/test")
 class TestRequest(MethodView):
-    @jwt_required()
+    # @jwt_required()
     def post(self):
-
-        tst = send_mfa_email("email address", 987654321)
-        return {"success": True, "temp_identifier": 987654321}
+        print(request)
+        return {"success": True}, 201
