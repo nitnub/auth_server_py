@@ -34,7 +34,7 @@ class Logger:
         """Log the given error message with a formatted timestamp."""
         return self._log_event(message, "ERROR")
 
-    def warn(self, message):
+    def warning(self, message):
         """Log the given warning message with a formatted timestamp."""
         return self._log_event(message, "WARN")
 
