@@ -24,9 +24,14 @@ def create_app(db_url=None):
 
     # register db
     db.init_app(app)
-    migrate = Migrate(app, db)
+    Migrate(app, db)
 
     api = Api(app)
+
+    # setup logging
+    log_file = os.getenv("LOGFILE_NAME")
+    if log_file:
+        Log.register_log_file(log_file)
 
     # JWTs
     # TODO: isolate config?

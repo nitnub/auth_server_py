@@ -5,24 +5,31 @@ class Logger:
     """Log error and status info to a file or the terminal."""
 
     def __init__(self, log_file: str = None, to_terminal: bool = True):
-        self.log_file = log_file
+        if not (log_file and self.register_log_file(log_file)):
+            self.log_file = None
         self.to_terminal = to_terminal
 
     # inject a file for writing log messages
     def register_log_file(self, file_name: str):
         """Register a file for log data to be written to. Optional."""
         try:
-            self.log_file = open(file_name, 'a')
+            with open(file_name, 'a') as _:
+                self.log_file = file_name
+            return True
         except Exception as e:
-            print(f"Unable to load logfile {file_name}:", e)
+            print(f"Unable to register logfile {file_name}:", e)
+            return False
 
     def _log_event(self, message, event_type):
         stamped_message = f"[{datetime.now()}] [{event_type}] {message}\n"
-
         if self.log_file:
-            self.log_file.write(stamped_message)
+            try:
+                with open(self.log_file, 'a') as log:
+                    log.write(stamped_message)
+            except Exception as e:
+                print("Logging error:", e)
         if self.to_terminal:
-            # TODO: more formatting / colors / etc?
+            # TODO: more formatting / colors / etc. based on type?
             print(stamped_message, end="")  # string comes with newline
         return stamped_message
 
@@ -34,7 +41,7 @@ class Logger:
         """Log the given error message with a formatted timestamp."""
         return self._log_event(message, "ERROR")
 
-    def warn(self, message):
+    def warning(self, message):
         """Log the given warning message with a formatted timestamp."""
         return self._log_event(message, "WARN")
 
@@ -55,7 +62,7 @@ class Logger:
                    )
         return self.info(message)
 
-    # # log an event?
+    # # log an "event" type?
     # def event(self, e, message=None):
     #     pass
 
