@@ -13,6 +13,7 @@ Env = Constants.Env
 Const = Constants.Strings
 Status = Constants.StatusCode
 
+
 def create_app(db_url=None):
     app = Flask(__name__)
     load_dotenv()
@@ -31,9 +32,7 @@ def create_app(db_url=None):
     api = Api(app)
 
     # setup logging
-    log_file = os.getenv(Env.LOGFILE_NAME)
-    if log_file:
-        Log.register_log_file(log_file)
+    Log.register_log_file(os.getenv(Env.LOGFILE_NAME))
 
     # JWTs
     # TODO: isolate config?
