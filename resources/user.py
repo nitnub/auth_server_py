@@ -11,12 +11,13 @@ from flask_jwt_extended import (
 from sqlalchemy.exc import IntegrityError
 from passlib.hash import pbkdf2_sha256 as h
 from db import db
-from utils import Log
+from utils import Log, Constants
 from cache import cache
 from models import UserModel
 from schemas import UserSchema, SignInSchema
 
 bp = Blueprint("Users", __name__, description="User operations")
+Status = Constants.StatusCode
 
 
 @bp.route("/register")
@@ -34,11 +35,11 @@ class RegisterUser(MethodView):
             return {
                 "success": True,
                 "message": "User created successfully."
-            }, 201
+            }, Status.CREATED
         except TypeError:
-            abort(400, "Invalid argument(s).")
+            abort(Status.BAD_REQUEST, "Invalid argument(s).")
         except IntegrityError:
-            abort(409, "Username already in use.")
+            abort(Status.CONFLICT, "Username already in use.")
 
 
 @bp.route("/signin")
@@ -61,10 +62,10 @@ class SignIn(MethodView):
                     "refresh_token": refresh_token
                 }
 
-            abort(401, message="Invalid credentials.")
+            abort(Status.UNAUTHORIZED, message="Invalid credentials.")
         except Exception as e:
             print(e)
-            abort(500, "Unknown error.")
+            abort(Status.INTERNAL_ERROR, "Unknown error.")
 
 
 @bp.route("/signout")
@@ -88,7 +89,7 @@ class TokenRefresh(MethodView):
             return {"success": True, "access_token": token}
         except Exception as e:
             Log.error("Error creating access token", e)
-            abort(500, "Unknown error.")
+            abort(Status.INTERNAL_ERROR, "Unknown error.")
 
 # TODO: o-auth...
 # @app.post('/signin-oauth')
@@ -105,4 +106,4 @@ class TestRequest(MethodView):
     # @jwt_required()
     def post(self):
         print(request)
-        return {"success": True}, 201
+        return {"success": True}, Status.OK

@@ -6,12 +6,15 @@ from app import create_app
 from db import db
 from sqlalchemy import delete
 from models.user import UserModel
+from utils import Constants
+
+Env = Constants.Env
 
 
 @pytest.fixture(scope="function")
 def app():
     load_dotenv()
-    app = create_app(os.getenv("TEST_DATABASE_URL"))
+    app = create_app(os.getenv(Env.TEST_DATABASE_URL))
     app.config.update({"TESTING": True})
 
     yield app

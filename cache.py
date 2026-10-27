@@ -1,16 +1,18 @@
 import os
 import redis
 from datetime import datetime, timezone
+from utils import Constants
 
+Env = Constants.Env
 REDIS_DEFAULT_PORT = 6379
 
 
 class TokenCache():  # TODO: update name? more general?
     def __init__(self):
         self.r = redis.Redis(
-            host=os.getenv("REDIS_HOST"),
-            port=os.getenv("REDIS_PORT", REDIS_DEFAULT_PORT),
-            db=os.getenv("REDIS_DB")
+            host=os.getenv(Env.REDIS_HOST),
+            port=os.getenv(Env.REDIS_PORT, REDIS_DEFAULT_PORT),
+            db=os.getenv(Env.REDIS_DB)
         )
 
     # blacklist a token
@@ -44,13 +46,13 @@ class TokenCache():  # TODO: update name? more general?
         self.r.set(request_id, confirmation_code, ex=ttl)
         return True
 
-    def is_valid_confirmation(self, request_id, confirmation_code):
+    def is_valid_confirmation(self, request_id: str, confirmation_code: str):
         """Verify the given request id -> confirmation code pair is valid."""
         prior_code = self.r.get(request_id)
+        formatted_confirmation = confirmation_code.replace('-', '')
+        return prior_code and prior_code.decode() == formatted_confirmation
 
-        return prior_code and prior_code.decode() == confirmation_code
-
-    def remove_confirmation(self, request_id):
+    def remove_confirmation(self, request_id: str):
         """Remove the given request id from the cache to avoid reuse."""
         return self.r.delete(request_id) != 0
 

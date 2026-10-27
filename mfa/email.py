@@ -1,7 +1,9 @@
 import os
 from smtplib import SMTP_SSL
-
 from email.message import EmailMessage
+from utils import Constants
+
+Env = Constants.Env
 
 
 def _get_email_string(user_email, text):
@@ -9,21 +11,17 @@ def _get_email_string(user_email, text):
     subject = "Verification code for testing..."
     message = EmailMessage()
     message["To"] = user_email
-    message["From"] = os.getenv("MFA_EMAIL_ADDRESS")
+    message["From"] = os.getenv(Env.MFA_EMAIL_ADDRESS)
     message["Subject"] = subject
     message.set_content(text)
     return message.as_string()
 
 
 def send_mfa_email(user_email, confirmation_code):
-
-    sender_email = os.getenv("MFA_EMAIL_ADDRESS")
-    # confirmation_code = 8256
-
-    sender_password = os.getenv("MFA_EMAIL_PASSWORD")
-    # user_email = os.getenv("MFA_EMAIL_TEST_RECIPIENT")  # TODO: add for testing
-    smtp = os.getenv("MFA_EMAIL_SMTP")
-
+    sender_email = os.getenv(Env.MFA_EMAIL_ADDRESS)
+    sender_password = os.getenv(Env.MFA_EMAIL_PASSWORD)
+    # user_email = os.getenv(Env.MFA_EMAIL_TEST_RECIPIENT)  # TODO: for testing
+    smtp = os.getenv(Env.MFA_EMAIL_SMTP)
     text = f"Your 2fa code is {confirmation_code}"
 
     try:
@@ -36,9 +34,9 @@ def send_mfa_email(user_email, confirmation_code):
         demo = True
         # smtp_server = SMTP_SSL(smtp, 465)
         if demo:
-            print("Demo mode...")
-            print("Recipient:", user_email)
-            print("Text     :", text)
+            print("Demo mode...\n"
+                  f"Recipient: {user_email}\n"
+                  f"Text     : {text}")
             return True
 
         smtp_server.login(sender_email, sender_password)

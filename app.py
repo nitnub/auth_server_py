@@ -1,17 +1,17 @@
 import os
-
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_smorest import Api
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
-
 from db import db
 from cache import cache
-
 from resources import UserBluePrint, MFABluePrint
-from utils import Log
+from utils import Log, Constants
 
+Env = Constants.Env
+Const = Constants.Strings
+Status = Constants.StatusCode
 
 def create_app(db_url=None):
     app = Flask(__name__)
@@ -20,7 +20,9 @@ def create_app(db_url=None):
     app.config["API_TITLE"] = "User authentication API"
     app.config["API_VERSION"] = "v1"
     app.config["OPENAPI_VERSION"] = "3.2.0"
-    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv("DATABASE_URL", "sqlite:///data.db")
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv(
+        Env.DATABASE_URL, Const.SQLITE_URL
+    )
 
     # register db
     db.init_app(app)
@@ -29,13 +31,13 @@ def create_app(db_url=None):
     api = Api(app)
 
     # setup logging
-    log_file = os.getenv("LOGFILE_NAME")
+    log_file = os.getenv(Env.LOGFILE_NAME)
     if log_file:
         Log.register_log_file(log_file)
 
     # JWTs
     # TODO: isolate config?
-    app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+    app.config["JWT_SECRET_KEY"] = os.getenv(Env.JWT_SECRET_KEY)
     jwt = JWTManager(app)
 
     # JWT Blocklist
@@ -53,7 +55,7 @@ def create_app(db_url=None):
             "message": "The token has expired.",
             "error": "token_expired",
             "success": False
-        }), 401
+        }), Status.UNAUTHORIZED
 
     @jwt.invalid_token_loader
     def invalid_token_callback(error):
@@ -61,7 +63,7 @@ def create_app(db_url=None):
             "message": "Unable to verify token signature.",
             "error": "token_invalid",
             "success": False
-        }), 401
+        }), Status.UNAUTHORIZED
 
     # # create tables if not present... remove.. switched to migrate
     # with app.app_context():

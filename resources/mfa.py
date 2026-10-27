@@ -4,16 +4,14 @@ import string
 
 from flask.views import MethodView
 from flask_smorest import Blueprint
-from flask_jwt_extended import create_access_token, create_refresh_token
-
 from cache import cache
 from models import UserModel
 from schemas import EmailRequestSchema, EmailConfirmSchema
-
 from mfa import send_mfa_email
-from utils import create_fresh_tokens_obj
+from utils import create_fresh_tokens_obj, Constants
 
 bp = Blueprint("Email Requests", __name__, description="MFA email requests")
+Status = Constants.StatusCode
 
 
 def _generate_confirmation_code(length: int = 8) -> str:
@@ -63,14 +61,14 @@ class EmailRequest(MethodView):
                 "success": True,
                 "message": "Request processed.",
                 "request_id": request_id
-            }
+            }, Status.OK
         except Exception as e:
             print("error sending email request:", e)
             # TODO: change to abort(); if an internal error, ok to surface...
             return {
                 "success": False,
                 "message": "Internal error while processing request."
-            }, 500
+            }, Status.INTERNAL_ERROR
 
 
 @bp.route("/mfa/emailconfirm")
@@ -86,17 +84,20 @@ class EmailConfirm(MethodView):
             return {
                 "success": False,
                 "message": "Error processing request."
-            }
+            }, Status.BAD_REQUEST
 
         # if match, return access and refresh token.
-        if cache.is_valid_confirmation(user_data["temp_id"], user_data["code"]):
+        if cache.is_valid_confirmation(
+                user_data["temp_id"],
+                user_data["code"]
+                ):
             # prevent multiple requests from one temp_id
             cache.remove_confirmation(user_data["temp_id"])
 
             tokens = create_fresh_tokens_obj(user.id)
-            return {"success": True, **tokens}, 200
+            return {"success": True, **tokens}, Status.OK
         print("Not a valid confirmation..")
         return {
             "success": False,
             "message": "Invalid confirmation code."
-        }
+        }, Status.BAD_REQUEST
